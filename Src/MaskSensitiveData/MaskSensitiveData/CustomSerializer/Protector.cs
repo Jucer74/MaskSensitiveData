@@ -19,7 +19,7 @@ namespace MaskSensitiveData.CustomSerializer
             var serializedData = JsonConvert.SerializeObject(data);
 
             Dictionary<string, string> maskedFieldsDic = new Dictionary<string, string>();
-            GetMaskedFields(data, maskedFieldsDic);
+            GetMaskedFields(typeof(TData), maskedFieldsDic);
 
             if (maskedFieldsDic.Count >= 1)
             {
@@ -31,8 +31,27 @@ namespace MaskSensitiveData.CustomSerializer
                 serializedData = jsonObject.ToString();
             }
 
-            // else
             return serializedData;
+        }
+
+        public static string MaskFields(string serializedData, Type dataType)
+        {
+            var maskedData = serializedData;
+
+            Dictionary<string, string> maskedFieldsDic = new Dictionary<string, string>();
+            GetMaskedFields(dataType, maskedFieldsDic);
+
+            if (maskedFieldsDic.Count >= 1)
+            {
+                // Convert to JSon Object
+                var jsonObject = (JObject)JsonConvert.DeserializeObject(serializedData);
+
+                // Iterate over the Object and replace the values with the mask
+                MaskFieldsFromJToken(jsonObject, maskedFieldsDic);
+                maskedData = jsonObject.ToString();
+            }
+
+            return maskedData;
         }
 
         private static string CleanPropertyPath(string propPath)
@@ -40,11 +59,9 @@ namespace MaskSensitiveData.CustomSerializer
             return Regex.Replace(propPath, @"\[[0-9]*\]", string.Empty);
         }
 
-        private static void GetMaskedFields<TData>(TData data, Dictionary<string, string> maskedFieldsDic, string path = null)
+        private static void GetMaskedFields(Type dataType, Dictionary<string, string> maskedFieldsDic, string path = null)
         {
-            Type typeData = data.GetType();
-            PropertyInfo[] propertiesInfo = typeData.GetProperties();
-            object propertyValue = null;
+            PropertyInfo[] propertiesInfo = dataType.GetProperties();
 
             foreach (var prop in propertiesInfo)
             {
@@ -61,18 +78,15 @@ namespace MaskSensitiveData.CustomSerializer
                     {
                         if (prop.PropertyType.GenericTypeArguments.Length > 0)
                         {
-                            propertyValue = ((IList)prop.GetValue(data))[0];
+                            GetMaskedFields(prop.PropertyType.GenericTypeArguments[0], maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
                         }
                     }
-
-                    if (prop.PropertyType.IsClass)
+                    else
                     {
-                        propertyValue = prop.GetValue(data);
-                    }
-
-                    if (propertyValue != null)
-                    {
-                        GetMaskedFields(propertyValue, maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
+                        if (prop.PropertyType.IsClass)
+                        {
+                            GetMaskedFields(prop.PropertyType, maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
+                        }
                     }
                 }
             }
