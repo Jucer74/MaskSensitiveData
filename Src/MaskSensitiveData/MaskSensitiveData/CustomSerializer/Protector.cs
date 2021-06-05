@@ -200,7 +200,7 @@ namespace MaskSensitiveData.CustomSerializer
                 if (isMasked)
                 {
                     SensitiveDataAttribute SensitiveDataAttribute = (SensitiveDataAttribute)Attribute.GetCustomAttribute(prop, typeof(SensitiveDataAttribute));
-                    maskedFieldsDic.Add((propPath is null) ? prop.Name : $"{propPath}.{prop.Name}", SensitiveDataAttribute.Mask);
+                    maskedFieldsDic.Add(((propPath is null) ? prop.Name : $"{propPath}.{prop.Name}").ToLower(), SensitiveDataAttribute.Mask);
                 }
 
                 if (!IsBaseType(prop))
@@ -268,7 +268,7 @@ namespace MaskSensitiveData.CustomSerializer
             {
                 if (jtoken is JProperty prop)
                 {
-                    var matching = maskedFields.ContainsKey(CleanPropertyPath(prop.Path));
+                    var matching = maskedFields.ContainsKey(CleanPropertyPath(prop.Path.ToLower()));
 
                     if (matching)
                     {
@@ -283,7 +283,7 @@ namespace MaskSensitiveData.CustomSerializer
             foreach (JToken tok in blackList)
             {
                 var prop = (JProperty)tok;
-                prop.Value = maskedFields[CleanPropertyPath(prop.Path)];
+                prop.Value = maskedFields[CleanPropertyPath(prop.Path.ToLower())];
             }
         }
     }
