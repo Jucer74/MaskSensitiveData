@@ -41,7 +41,7 @@ namespace MaskSensitiveData.CustomSerializer
             Dictionary<string, string> maskedFieldsDic = new Dictionary<string, string>();
             GetMaskedFields(dataType, maskedFieldsDic);
 
-            if (maskedFieldsDic.Count >= 1)
+            if (maskedFieldsDic.Count > 0)
             {
                 // Convert to JSon Object
                 var jsonObject = (JObject)JsonConvert.DeserializeObject(serializedData);
@@ -201,10 +201,7 @@ namespace MaskSensitiveData.CustomSerializer
                 {
                     if (IsGenericType(prop))
                     {
-                        if (prop.PropertyType.GenericTypeArguments.Length > 0)
-                        {
-                            GetMaskedFields(prop.PropertyType.GenericTypeArguments[0], maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
-                        }
+                        GetMaskedFields(prop.PropertyType.GenericTypeArguments[0], maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
                     }
                     else
                     {
@@ -225,9 +222,7 @@ namespace MaskSensitiveData.CustomSerializer
         /// <returns>True if the property is a base type, otherwise False.</returns>
         private static bool IsBaseType(PropertyInfo propertyInfo)
         {
-            return (propertyInfo.PropertyType.IsValueType ||
-                propertyInfo.PropertyType.FullName.Equals("System.String") ||
-                propertyInfo.PropertyType.FullName.Equals("System.Object"));
+            return propertyInfo.PropertyType.IsValueType;
         }
 
         /// <summary>
