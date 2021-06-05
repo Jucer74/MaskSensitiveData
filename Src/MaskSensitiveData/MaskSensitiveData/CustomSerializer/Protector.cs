@@ -15,6 +15,12 @@ namespace MaskSensitiveData.CustomSerializer
     /// </Remarks>
     public static class Protector
     {
+        #region Constants
+
+        private static readonly string ARRAY_DEFINITION_REGEXP = @"\[[0-9]*\]";
+
+        #endregion Constants
+
         /// <summary>
         /// Identify the Fields marked by the attribute [SensitiveData] and replace the value for the Mask
         /// </summary>
@@ -107,7 +113,7 @@ namespace MaskSensitiveData.CustomSerializer
         /// <returns>Property path with out Array Definition</returns>
         private static string CleanPropertyPath(string propPath)
         {
-            return Regex.Replace(propPath, @"\[[0-9]*\]", string.Empty);
+            return Regex.Replace(propPath, ARRAY_DEFINITION_REGEXP, string.Empty);
         }
 
         /// <summary>
@@ -184,7 +190,7 @@ namespace MaskSensitiveData.CustomSerializer
         /// <Remarks>
         /// The Generic fields supported are only IList types.
         /// </Remarks>
-        private static void GetMaskedFields(Type dataType, Dictionary<string, string> maskedFieldsDic, string path = null)
+        private static void GetMaskedFields(Type dataType, Dictionary<string, string> maskedFieldsDic, string propPath = null)
         {
             PropertyInfo[] propertiesInfo = dataType.GetProperties();
 
@@ -194,20 +200,20 @@ namespace MaskSensitiveData.CustomSerializer
                 if (isMasked)
                 {
                     SensitiveDataAttribute SensitiveDataAttribute = (SensitiveDataAttribute)Attribute.GetCustomAttribute(prop, typeof(SensitiveDataAttribute));
-                    maskedFieldsDic.Add((path is null) ? prop.Name : $"{path}.{prop.Name}", SensitiveDataAttribute.Mask);
+                    maskedFieldsDic.Add((propPath is null) ? prop.Name : $"{propPath}.{prop.Name}", SensitiveDataAttribute.Mask);
                 }
 
                 if (!IsBaseType(prop))
                 {
                     if (IsGenericType(prop))
                     {
-                        GetMaskedFields(prop.PropertyType.GenericTypeArguments[0], maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
+                        GetMaskedFields(prop.PropertyType.GenericTypeArguments[0], maskedFieldsDic, (propPath is null) ? prop.Name : $"{propPath}.{prop.Name}");
                     }
                     else
                     {
                         if (IsClassType(prop))
                         {
-                            GetMaskedFields(prop.PropertyType, maskedFieldsDic, (path is null) ? prop.Name : $"{path}.{prop.Name}");
+                            GetMaskedFields(prop.PropertyType, maskedFieldsDic, prop.Name);
                         }
                     }
                 }
