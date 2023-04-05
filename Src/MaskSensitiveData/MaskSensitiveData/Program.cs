@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace MaskSensitiveData
 {
-    internal class Program
+    public static class Program
     {
         private static void Main(string[] args)
         {
